@@ -1,10 +1,12 @@
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using static Starter1C.Form1;
 
 namespace Starter1C
 {
     public partial class Form1 : Form
     {
+        public int SelectedRowIndex = -1;
         public Form1()
         {
             InitializeComponent();
@@ -17,11 +19,11 @@ namespace Starter1C
             dataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.None;
             //dataGridView1.DefaultCellStyle.SelectionBorderColor = Color.Red;
             dataGridView1.CellPainting += dataGridView1_CellPainting;
-
-            //button1.BorderRadius = 10;
-
-
-
+            button1.Image = new Bitmap(button1.Image, 20, 20);
+            if (SelectedRowIndex == -1) 
+            {
+                button1.Enabled = false;
+            }
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -43,6 +45,7 @@ namespace Starter1C
                 }
 
                 e.Handled = true;
+                SelectedRowIndex = e.RowIndex;
             }
         }
 
@@ -78,43 +81,9 @@ namespace Starter1C
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //if (listBox1.SelectedItem != null)
-            //{
-            //    string selectedTextItem = listBox1.SelectedItem.ToString();
-            //    for (int i = 0; i < listBase.Count; i++)
-            //    {
-            //        if (listBase[i].name == selectedTextItem)
-            //        {
-            //            label1.Text = listBase[i].path;
-            //        }
-            //    }
-            //}
+            int rowIndex = dataGridView1.Rows.Add();
+            dataGridView1.Rows[rowIndex].Cells[0].Value = SelectedRowIndex;
         }
-        //private void printAllPaths()
-        //{
-        //    var userFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        //    string basesFilePath = userFolder + $"\\AppData\\Roaming\\1C\\1CEStart\\ibases.v8i";
-        //
-        //    List<string> items = GetListOfBases(basesFilePath);
-        //    for (int i = 0; i < items.Count; i++)
-        //    {
-        //        GroupBox textBlock = new GroupBox();
-        //
-        //        Label label = new Label();
-        //
-        //        label.Text = items[i]; // Установка текстового свойства для Label
-        //
-        //        textBlock.Controls.Add(label);
-        //        //textBlock.Controls.Add(items[i]);
-        //        textBlock.BackColor = Color.Blue;
-        //
-        //
-        //        listBox1.Items.Add(textBlock);
-        //    }
-        //}
-        /// <summary>
-        /// статусы базы
-        /// </summary>
         public enum BasesStatus
         {
             OK, // можно копировать
@@ -152,38 +121,6 @@ namespace Starter1C
             string namebase, pathbase, copiedbase, datedel = "";
 
             // парсинг файла списка
-            // ТУТ ОПИШИ НОВЫЙ АЛГОРИТМ ПАРСИНГА КТОРОЫЙ СОБИРАЕТ ПАЧКАМИ СТРОКИ И ОБЪЕДИНЯЕТ ПО ПАЧКЕ ЕСЛИ ВСТРЕЧАЕТ "[БД]". ТАК ЖЕ НЕОБХОДИМО ПРОПУСКАТЬ ПУСТЫЕ СТРОКИ
-            /*
-             ПЕРЕБОР ВСЕГО ТЕКСТА ДЛЯ ГРУППИРОВКИ ДАННЫХ  О КАЖДОЙ БАЗЕ
-             ЗАПОЛНЕНИЕ КЛАССА БАЗА НА ОСНОВЕ ПОЛУЧЕННЫХ ПАЧЕК БД
-             ПРОВЕРКА НАЛИЧИЯ ИСПОЛНЯЕМОГО ФАЙЛА
-             
-            using System;
-            using System.Collections.Generic;
-
-            class Program
-            {
-                static void Main(string[] args)
-                {
-                    Dictionary<string, List<string>> dictionary = new Dictionary<string, List<string>>();
-        
-                    // Добавление пары ключ-значение со строковым ключом и списком строк в качестве значения
-                    string key = "имя";
-                    List<string> value = new List<string>() { "строка1", "строка2", "строка3" };
-                    dictionary.Add(key, value);
-        
-                    Console.WriteLine("Ключ: " + key);
-                    Console.WriteLine("Значение: ");
-                    foreach (string item in dictionary[key])
-                    {
-                        Console.WriteLine(item);
-                    }
-        
-                    Console.ReadLine();
-                }
-            }
-
-             */
             Dictionary<string, List<string>> basesData = new Dictionary<string, List<string>>();
             string baseName = "";
             List<string> strings = new List<string>();
@@ -193,7 +130,7 @@ namespace Starter1C
                 Dictionary<string, List<string>> t = basesData;
                 string str = sr_BasesList.ReadLine();
                 // заполнение списка
-                if (str.Length != 0) 
+                if (str.Length != 0)
                 {
                     if (str[0] == '[') // если строка начинается с [, то в ней содержится название базы
                     {
@@ -201,7 +138,8 @@ namespace Starter1C
                         str = str.Remove(str.Length - 1, 1);
                         baseName = str;
                         strings = new List<string>();
-                    } else if (str != null && str != "" && baseName != "")
+                    }
+                    else if (str != null && str != "" && baseName != "")
                     {
                         strings.Add(str);
                         basesData[baseName] = strings;
@@ -209,7 +147,7 @@ namespace Starter1C
                 }
             }
             string q = "";
-            if (basesData.Count!=0) 
+            if (basesData.Count != 0)
             {
                 foreach (string base_name in basesData.Keys)
                 {
@@ -218,7 +156,7 @@ namespace Starter1C
                     string name = base_name;
                     string pathExe = "";
                     string dateDel = "";
-                    
+
                     List<string> lines = basesData[base_name];
                     foreach (string base_line in lines)
                     {
@@ -247,47 +185,6 @@ namespace Starter1C
                     //Dictionary<string, List<string>> w = basesData;
                 }
             }
-            //Console.WriteLine(q);
-
-            //for
-
-            //if (basesData.Length) 
-            //{
-            //    
-            //}
-
-            //str = sr_BasesList.ReadLine();
-            //if (str[0] == '[') continue;
-            //
-            //if (str.Contains("Connect=")) // если строка содержит "Connect=", то в ней содержится путь к базе
-            //{
-            //    if (str.Contains("DateDel")) // если строка содержит "File", то база файловая и ее можно копировать
-            //    {
-            //        str = str.Remove(0, 9);
-            //        datedel = str;
-            //    }
-            //    if (str.Contains("File")) // если строка содержит "File", то база файловая и ее можно копировать
-            //    {
-            //        // обработка пути к файлу БД
-            //        str = str.Remove(0, 14);
-            //        str = str.Remove(str.Length - 2, 2);
-            //        pathbase = str;
-            //
-            //
-            //        if (File.Exists(Path.Combine(pathbase, "1cv8.1cd"))) // файл существует, можно копировать
-            //        {
-            //            listBase.Add(new Bases { name = namebase, path = pathbase, copied = BasesStatus.OK, dateDel = datedel });
-            //        }
-            //        else // файла не существует
-            //        {
-            //            listBase.Add(new Bases { name = namebase, path = "", copied = BasesStatus.NotFound, dateDel = datedel });
-            //        }
-            //    }
-            //    else // если строка с "Connect=" не содержит "File", то база клиент-серверная или веб-Серверная. База не копируется
-            //    {
-            //        listBase.Add(new Bases { name = namebase, path = "", copied = BasesStatus.Server, dateDel = datedel });
-            //    }
-            //}
 
             // закрыть файл списка баз
             sr_BasesList.Close();
