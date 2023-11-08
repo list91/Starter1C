@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             label1 = new Label();
             label2 = new Label();
             button1 = new Button();
@@ -62,12 +63,18 @@
             // 
             // button1
             // 
+            button1.BackColor = Color.FromArgb(250, 250, 250);
+            button1.FlatAppearance.BorderColor = Color.FromArgb(250, 250, 250);
+            button1.FlatStyle = FlatStyle.Popup;
+            button1.Image = (Image)resources.GetObject("button1.Image");
+            button1.ImageAlign = ContentAlignment.MiddleLeft;
             button1.Location = new Point(373, 97);
             button1.Name = "button1";
             button1.Size = new Size(122, 25);
             button1.TabIndex = 3;
-            button1.Text = "Запустить";
-            button1.UseVisualStyleBackColor = true;
+            button1.Text = "1С Предприятие";
+            button1.TextAlign = ContentAlignment.MiddleRight;
+            button1.UseVisualStyleBackColor = false;
             button1.Click += button1_Click;
             // 
             // button2
