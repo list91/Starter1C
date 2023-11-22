@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using static Starter1C.Form1;
@@ -20,9 +22,70 @@ namespace Starter1C
             //dataGridView1.DefaultCellStyle.SelectionBorderColor = Color.Red;
             dataGridView1.CellPainting += dataGridView1_CellPainting;
             button1.Image = new Bitmap(button1.Image, 20, 20);
-            if (SelectedRowIndex == -1) 
+            CheckSelected();
+
+            //ControlBox = false;
+            //menuStrip1.BackColor = Color.Blue;
+
+            this.Text = "";
+
+            setStyleBtn(button1);
+            setStyleBtn(button2);
+            setStyleBtn(button3);
+
+
+
+
+
+        }
+        public void setStyleBtn(Button button)
+        {
+            button.FlatStyle = FlatStyle.Flat;
+            int borderRadius = 3; // Радиус скругления (можно изменить на нужное значение)
+            int borderWidth = 3; // Толщина контура линии (можно изменить на нужное значение)
+
+            System.Drawing.Pen borderPen = new System.Drawing.Pen(System.Drawing.Color.Black, borderWidth);
+
+            System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+            int arcSize = borderRadius * 2;
+
+            // Верхний левый угол
+            path.AddArc(new System.Drawing.Rectangle(0, 0, arcSize, arcSize), 180, 90);
+            // Верхняя граница
+            path.AddLine(borderRadius, 0, button.Width - borderRadius, 0);
+            // Верхний правый угол
+            path.AddArc(new System.Drawing.Rectangle(button.Width - arcSize, 0, arcSize, arcSize), 270, 90);
+            // Правая граница
+            path.AddLine(button.Width, borderRadius, button.Width, button.Height - borderRadius);
+            // Нижний правый угол
+            path.AddArc(new System.Drawing.Rectangle(button.Width - arcSize, button.Height - arcSize, arcSize, arcSize), 0, 90);
+            // Нижняя граница
+            path.AddLine(button.Width - borderRadius, button.Height, borderRadius, button.Height);
+            // Нижний левый угол
+            path.AddArc(new System.Drawing.Rectangle(0, button.Height - arcSize, arcSize, arcSize), 90, 90);
+            // Левая граница
+            path.AddLine(0, button.Height - borderRadius, 0, borderRadius);
+
+            button.Region = new System.Drawing.Region(path);
+            button.Paint += (sender, e) =>
             {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                e.Graphics.DrawPath(borderPen, path);
+            };
+        }
+
+
+        public void CheckSelected()
+        {
+            if (SelectedRowIndex == -1)
+            {
+                yt_Button1.HideButton();
                 button1.Enabled = false;
+            }
+            else
+            {
+                yt_Button1.ShowButton();
+                button1.Enabled = true;
             }
         }
 
@@ -46,6 +109,7 @@ namespace Starter1C
 
                 e.Handled = true;
                 SelectedRowIndex = e.RowIndex;
+                CheckSelected();
             }
         }
 
@@ -82,7 +146,30 @@ namespace Starter1C
         private void button1_Click(object sender, EventArgs e)
         {
             int rowIndex = dataGridView1.Rows.Add();
-            dataGridView1.Rows[rowIndex].Cells[0].Value = SelectedRowIndex;
+            //dataGridView1.Rows[rowIndex].Cells[0].Value = SelectedRowIndex;
+            string nameDB = dataGridView1.Rows[SelectedRowIndex].Cells[0].Value.ToString();
+            //dataGridView1.Rows[rowIndex].Cells[0].Value = nameDB;
+            string pathExe = null;
+            foreach (Bases bases in listBase)
+            {
+                if (bases.name == nameDB)
+                {
+                    pathExe = bases.path;
+                }
+            }
+            if (pathExe != null)
+            {
+                try
+                {
+                    //Process.Start("C:\\Users\\Sibgroup-PC2\\Desktop\\javafx config.txt");
+                    Process.Start(new ProcessStartInfo { FileName = pathExe, UseShellExecute = true });
+                    Console.WriteLine("Файл успешно запущен.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка при запуске файла: {ex.Message}");
+                }
+            }
         }
         public enum BasesStatus
         {
@@ -171,15 +258,46 @@ namespace Starter1C
                                 if (!isDel) { isDel = true; }
                             }
                         }
+                        if (base_line.Contains("Connect=File="))
+                        {
+                            string input = base_line;
+
+                            // Проверяем наличие подстроки "Connect=File="
+                            int startIndex = input.IndexOf("Connect=File=");
+
+                            if (startIndex != -1)
+                            {
+                                // Получаем оставшуюся часть строки
+                                input = input.Substring(startIndex + "Connect=File=".Length);
+
+                                int startIndexPoint = input.IndexOf('"');
+                                int endIndexPoint = input.LastIndexOf('"');
+
+                                if (startIndexPoint >= 0 && startIndexPoint != endIndexPoint)
+                                {
+                                    string findFolder = input.Substring(startIndexPoint + 1, endIndexPoint - startIndexPoint - 1);
+                                    string V8iFile = FindV8iFile(findFolder);
+                                    if (V8iFile != null) { pathExe = findFolder + "\\" + V8iFile; }
+                                }
+
+                                //pathExe = string.Empty;
+                            }
+                        }
                     }
-                    if (File.Exists(Path.Combine(path, "1cv8.1cd"))) // файл существует, можно копировать
+                    //Console.WriteLine(pathExe);
+                    // если есть файл БД и её лаунчер
+                    //if (File.Exists(Path.Combine(path, "1cv8.1cd")) && Directory.GetFiles(path, "*.v8i").Length > 0)
+                    if (pathExe != "")
                     {
-                        listBase.Add(new Bases { name = name, path = path, copied = BasesStatus.OK, dateDel = dateDel });
+                        // файл существует, можно копировать
+
+                        listBase.Add(new Bases { name = name, path = pathExe, copied = BasesStatus.OK, dateDel = dateDel });
                     }
-                    else // файла не существует
-                    {
-                        listBase.Add(new Bases { name = name, path = "", copied = BasesStatus.NotFound, dateDel = dateDel });
-                    }
+
+                    //else // файла не существует
+                    //{
+                    //    listBase.Add(new Bases { name = name, path = pathExe, copied = BasesStatus.NotFound, dateDel = dateDel });
+                    //}
                     //listBase.Add(new Bases { name = name, path = path, dateDel = dateDel });
                     //q += "\n\n";
                     //Dictionary<string, List<string>> w = basesData;
@@ -225,6 +343,20 @@ namespace Starter1C
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridView1.MultiSelect = false;
         }
+        static string FindV8iFile(string folderPath)
+        {
+            if (Directory.Exists(folderPath))
+            {
+                string[] files = Directory.GetFiles(folderPath, "*.v8i");
+                if (files.Length > 0)
+                {
+                    string fileName = Path.GetFileName(files[0]);
+                    return fileName;
+                }
+            }
+
+            return null;
+        }
 
         private void label1_Click(object sender, EventArgs e)
         {
@@ -240,6 +372,51 @@ namespace Starter1C
         private void button4_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void yt_Button2_Click(object sender, EventArgs e)
+        {
+            this.Close();
+            //yt_Button2.HideButton();
+        }
+
+        private void yt_Button4_Click(object sender, EventArgs e)
+        {
+            Form2 form = new Form2();
+            form.Show();
+        }
+
+        private void yt_Button1_Click(object sender, EventArgs e)
+        {
+            if (yt_Button1.Visible())
+            {
+                int rowIndex = dataGridView1.Rows.Add();
+                //dataGridView1.Rows[rowIndex].Cells[0].Value = SelectedRowIndex;
+                string nameDB = dataGridView1.Rows[SelectedRowIndex].Cells[0].Value.ToString();
+                //dataGridView1.Rows[rowIndex].Cells[0].Value = nameDB;
+                string pathExe = null;
+                foreach (Bases bases in listBase)
+                {
+                    if (bases.name == nameDB)
+                    {
+                        pathExe = bases.path;
+                    }
+                }
+                if (pathExe != null)
+                {
+                    try
+                    {
+                        //Process.Start("C:\\Users\\Sibgroup-PC2\\Desktop\\javafx config.txt");
+                        Process.Start(new ProcessStartInfo { FileName = pathExe, UseShellExecute = true });
+                        Console.WriteLine("Файл успешно запущен.");
+                        this.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при запуске файла: {ex.Message}");
+                    }
+                }
+            }
         }
     }
 
